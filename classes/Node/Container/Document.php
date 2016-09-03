@@ -697,6 +697,7 @@ class Node_Container_Document extends Node_Container
 		$str      = preg_replace('/[\r\n|\r]/', "\n", $str);
 		$len      = strlen($str);
 		$tag_open = false;
+		$params_open = false;
 		$tag_text = '';
 		$tag      = '';
 
@@ -705,7 +706,7 @@ class Node_Container_Document extends Node_Container
 
 		for($i=0; $i<$len; ++$i)
 		{
-			if($str[$i] === '[')
+			if($str[$i] === '[' && !$params_open)
 			{
 				if($tag_open)
 					$tag_text .= '[' . $tag;
@@ -713,7 +714,7 @@ class Node_Container_Document extends Node_Container
 				$tag_open = true;
 				$tag      = '';
 			}
-			else if($str[$i] === ']' && $tag_open)
+			else if($str[$i] === ']' && $tag_open && !$params_open)
 			{
 				if($tag !== '')
 				{
@@ -745,10 +746,19 @@ class Node_Container_Document extends Node_Container
 					$tag_text .= '[]';
 
 				$tag_open = false;
+				$params_open = false;
 				$tag      = '';
 			}
-			else if($tag_open)
-				$tag .= $str[$i];
+			else if ($tag_open)
+			{
+		        	$tag .= $str[$i];
+		
+		        	// Close params
+				if ($str[$i] === '=')
+		        		$params_open = true;
+			        elseif ($str[$i+1] == ']' && $params_open)
+		        		$params_open = false;
+		        }
 			else
 				$tag_text .= $str[$i];
 		}
